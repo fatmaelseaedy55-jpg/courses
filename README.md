@@ -22,6 +22,3 @@ https://fatmaelseaedy55-jpg.github.io/language-000/
 
 ## 🛠️ التقنيات المستخدمة
 HTML5, CSS3, JavaScript, Tailwind CSS, Font Awesome
-
----
-الموقع لسه بيتطور، لو عندك اقتراح ابعتيه!
