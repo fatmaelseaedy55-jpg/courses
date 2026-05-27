@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكاديمية المحترفين - منصة تعليمية تفاعلية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            start: '#2563eb', // الأزرق
+                            middle: '#7c3aed', // البنفسجي
+                            end: '#db2777' // الوردي
+                        }
+                    },
+                    animation: {
+                        'gradient-x': 'gradientX 15s ease infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        gradientX: {
+                            '0%, 100%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-effect 0.6s linear;
+            pointer-events: none;
+        }
+        @keyframes ripple-effect {
+            to { transform: scale(4); opacity: 0; }
+        }
+        .drag-over { border: 2px dashed #7c3aed !important; background: rgba(124, 58, 237, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300 min-h-screen flex flex-col">
+
+    <div id="toast-container" class="fixed top-5 left-5 z-50 flex flex-col gap-3 max-w-sm pointer-events-none"></div>
+
+    <header class="sticky top-0 z-40 w-full backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-r from-brand-start via-brand-middle to-brand-end p-2.5 rounded-xl text-white shadow-lg shadow-purple-500/20">
+                    <i class="fas fa-graduation-cap text-xl animate-bounce-slow"></i>
+                </div>
+                <span class="text-xl font-extrabold bg-gradient-to-r from-brand-start via-brand-middle to-brand-end bg-clip-text text-transparent">أكاديمية المحترفين</span>
+            </div>
+
+            <div class="hidden md:flex items-center relative w-1/3">
+                <i class="fas fa-search absolute right-3 text-slate-400"></i>
+                <input type="text" id="global-search" oninput="filterCards()" placeholder="ابحث عن كورس، لغة، أو منصة..." class="w-full pr-10 pl-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-brand-middle focus:outline-none transition-all text-sm">
+            </div>
+
+            <nav class="flex items-center gap-4">
+                <button onclick="toggleTheme()" class="relative p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:scale-105 transition-transform text-slate-600 dark:text-slate-300 btn-ripple">
+                    <i id="theme-icon" class="fas fa-moon text-lg"></i>
+                </button>
+                <button onclick="filterByFav()" class="relative p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:scale-105 transition-transform text-rose-500 btn-ripple">
+                    <i class="fas fa-heart text-lg"></i>
+                    <span id="fav-count" class="absolute -top-1 -left-1 bg-rose-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <section class="relative overflow-hidden bg-gradient-to-br from-blue-950 via-slate-950 to-pink-950 text-white py-20 px-4 text-center">
+        <div class="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-middle via-transparent to-transparent"></div>
+        <div class="relative z-10 max-w-3xl mx-auto space-y-6">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-sm font-semibold text-brand-end border border-white/10 animate-pulse">منصة مستقبلية لعام 2026</span>
+            <h1 class="text-4xl md:text-6xl font-black leading-tight">احترف مهارات المستقبل بتجربة <span class="bg-gradient-to-r from-brand-start via-brand-middle to-brand-end bg-clip-text text-transparent">تفاعلية بالكامل</span></h1>
+            <p class="text-slate-300 text-base md:text-lg max-w-2xl mx-auto">انطلق في مسارات تعليمية ذكية تشمل البرمجة، الجرافيك ديزاين، واللغات مع تقييمات ذكية ومحررات أكواد حية ومباشرة.</p>
+            
+            <div class="pt-6 flex flex-wrap gap-3 justify-center">
+                <button onclick="filterCategory('all')" class="cat-btn active bg-gradient-to-r from-brand-start to-brand-middle text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all">الكل</button>
+                <button onclick="filterCategory('design')" class="cat-btn bg-slate-800/80 text-slate-300 hover:bg-slate-800 px-5 py-2.5 rounded-xl text-sm font-bold transition-all">تصميم الجرافيك</button>
+                <button onclick="filterCategory('coding')" class="cat-btn bg-slate-800/80 text-slate-300 hover:bg-slate-800 px-5 py-2.5 rounded-xl text-sm font-bold transition-all">البرمجة والمطورين</button>
+                <button onclick="filterCategory('languages')" class="cat-btn bg-slate-800/80 text-slate-300 hover:bg-slate-800 px-5 py-2.5 rounded-xl text-sm font-bold transition-all">اللغات العالمية</button>
+                <button onclick="filterCategory('platforms')" class="cat-btn bg-slate-800/80 text-slate-300 hover:bg-slate-800 px-5 py-2.5 rounded-xl text-sm font-bold transition-all">منصات الشركاء</button>
+            </div>
+        </div>
+    </section>
+
+    <main class="container mx-auto px-4 py-12 flex-grow">
+        
+        <section id="live-editor-section" class="mb-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-amber-500/10 text-amber-500 rounded-lg"><i class="fas fa-code text-xl"></i></div>
+                    <div>
+                        <h3 class="text-xl font-bold">محرر الأكواد التفاعلي الحي (Live Code Editor)</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">اكتب كود HTML/CSS واعرض النتيجة فوراً</p>
+                    </div>
+                </div>
+                <button onclick="runLiveCode()" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 btn-ripple"><i class="fas fa-play ml-2"></i>تشغيل الكود</button>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="flex flex-col">
+                    <span class="text-xs font-mono text-slate-400 mb-1">HTML & CSS Input:</span>
+                    <textarea id="code-input" class="w-full h-48 p-4 bg-slate-950 text-emerald-400 font-mono text-sm rounded-xl border border-slate-800 focus:outline-none focus:border-brand-middle shadow-inner" dir="ltr"><div class="welcome-box">
+  <h1>أهلاً بك في أكاديمية المحترفين!</h1>
+  <p>قم بتعديل هذا النص لرؤية التغيير المباشر.</p>
+</div>
+
+<style>
+  .welcome-box {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #7c3aed, #db2777);
+    color: white;
+    border-radius: 12px;
+    font-family: sans-serif;
+  }
+</style></textarea>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-mono text-slate-400 mb-1">Live Preview:</span>
+                    <iframe id="code-output" class="w-full h-48 bg-white border border-slate-200 dark:border-slate-800 rounded-xl shadow-inner"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+    </main>
+
+    <div id="course-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] scale-95 transition-transform duration-300">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+                <div class="flex items-center gap-3">
+                    <div id="modal-icon-container" class="p-2.5 rounded-xl text-white"></div>
+                    <h3 id="modal-title" class="text-xl font-bold">اسم الكورس</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-lg bg-slate-100 dark:bg-slate-800"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div id="modal-content" class="p-6 overflow-y-auto space-y-6 text-sm leading-relaxed">
+                </div>
+        </div>
+    </div>
+
+    <footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 mt-auto">
+        <p>© 2026 أكاديمية المحترفين. تم التطوير بكل إتقان واحترافية.</p>
+    </footer>
+
+    <script>
+        // --- 1. DATA DEFINITIONS ---
+        const academyData = [
+            // Graphic Design Section
+            { id: 'ps', cat: 'design', title: 'دورة Adobe Photoshop الشاملة', icon: 'fa-images', color: 'from-blue-600 to-sky-500', desc: 'تعلم دمج الصور التخيلية وتصميم الإعلانات التجارية باحترافية.', 
+              levels: {
+                  beginner: 'مبادئ التصميم الرقمي، واجهة البرنامج، والتعامل مع الطبقات والأدوات الأساسية.',
+                  intermediate: 'القص المتقدم، التعديل اللوني، واستخدام الـ Masking و Smart Objects.',
+                  advanced: 'الدمج السريالي الاحترافي، الرسم الرقمي، وإعداد الملفات للطباعة التجارية.'
+              }
+            },
+            { id: 'ai', cat: 'design', title: 'دورة Adobe Illustrator للفيكتور', icon: 'fa-pen-nib', color: 'from-amber-600 to-orange-500', desc: 'تصميم الشعارات، الهويات البصرية الكاملة، والرسومات المتجهة.',
+              levels: {
+                  beginner: 'فهم الفيكتور، أداة البن تول (Pen Tool) وتحريك الأشكال والمسارات السهلة.',
+                  intermediate: 'تصميم الشعارات الأيقونية، بناء شبكات الهويات، واستخدام أدوات التدرج اللوني.',
+                  advanced: 'الرسم ثلاثي الأبعاد المتجه، التأثيرات المعقدة، وتصدير المشاريع للشركات المعتمدة.'
+              }
+            },
+            { id: 'id', cat: 'design', title: 'دورة Adobe InDesign للنشر', icon: 'fa-book-open', color: 'from-pink-600 to-rose-500', desc: 'تصميم الكتب، المجلات، والمستندات التفاعلية والبروفايل المكتبي.',
+              levels: {
+                  beginner: 'إعداد الصفحات، الهوامش، وإدراج النصوص والكتل الصورية بطرق صحيحة.',
+                  intermediate: 'تنسيق الفقرات تلقائياً، الصفحات الماستر (Master Pages)، وبناء جداول البيانات.',
+                  advanced: 'إخراج الكتالوجات الكبيرة، الكتب التفاعلية الرقمية وربط الأنماط للطباعة والـ PDF.'
+              }
+            },
+            // Coding Section
+            { id: 'html', cat: 'coding', title: 'مسار هيكلة الويب HTML5', icon: 'fa-html5', color: 'from-orange-600 to-amber-500', desc: 'اللبنة الأساسية لبناء كافة مواقع الويب وتطبيقات الأنترنت الحديثة.', isCoding: true,
+              levels: { beginner: 'مفهوم الويب، العناصر الأساسية والعناوين والجداول والروابط.', intermediate: 'النماذج والتفاصيل، عناصر السيمانتك (Semantic HTML)، وبنية السيو المبدئية.', advanced: 'التكامل مع الـ APIs، ميزات التخزين والوسائط والـ Canvas والوصول المتقدم.' }
+            },
+            { id: 'css', cat: 'coding', title: 'مسار التصميم والأنميشن CSS3', icon: 'fa-css3-alt', color: 'from-blue-600 to-indigo-500', desc: 'تلوين وتنسيق المواقع الإلكترونية وصناعة التأثيرات الحركية الفاخرة.', isCoding: true,
+              levels: { beginner: 'المحددات، الألوان، الصندوق (Box Model) والخطوط والتخطيط البسيط.', intermediate: 'أنظمة الأبعاد الحديثة Flexbox و Grid والتصميم المتجاوب التام للموبايل.', advanced: 'الأنميشن المعقد ثلاثي الأبعاد، المتغيرات، الفلاتر والـ Clip Paths المبتكرة.' }
+            },
+            { id: 'js', cat: 'coding', title: 'مسار لغة الجافا سكريبت JavaScript', icon: 'fa-js', color: 'from-yellow-500 to-amber-400', desc: 'إضافة الحيوية والتفاعلية الكاملة للمواقع والارتباط بالخوادم سريعا.', isCoding: true,
+              levels: { beginner: 'المتغيرات، المصفوفات، الدوال، الشروط والحلقات التكرارية الأساسية.', intermediate: 'التعامل مع الـ DOM، الأحداث، وتحليل البيانات والـ LocalStorage والمصفوفات الذكية.', advanced: 'البرمجة كائنية التوجه OOP، الأكواد غير المتزامنة Async/Await، والـ Fetch API والمقابس الإلكترونية.' }
+            },
+            { id: 'py', cat: 'coding', title: 'علوم بايثون الشاملة Python', icon: 'fa-python', color: 'from-sky-600 to-emerald-500', desc: 'اللغة الأقوى في الذكاء الاصطناعي، علم البيانات وتحليل النظم الرقمية.', isCoding: true,
+              levels: { beginner: 'تثبيت البيئة، المتغيرات، الجمل الشرطية وبنية البيانات البسيطة.', intermediate: 'التعامل مع الملفات، الدوال المتقدمة، والمكتبات المدمجة لتنظيم المهام وتنقيب البيانات.', advanced: 'بناء مشاريع الذكاء الاصطناعي، هندسة البيانات، والتعامل مع الخوارزميات والتعلم العميق.' }
+            },
+            { id: 'cpp', cat: 'coding', title: 'لغة الأنظمة والسرعة C++', icon: 'fa-terminal', color: 'from-indigo-700 to-purple-600', desc: 'فهم محركات الألعاب، التطبيقات المكتبية الشاهقة، وإدارة الذاكرة بكفاءة.', isCoding: true,
+              levels: { beginner: 'المفاهيم الهيكلية، المدخلات والمخرجات، والشروط الرياضية والحلقات.', intermediate: 'المؤشرات (Pointers)، الدوال والمصفوفات المركبة والتنظيم المتتالي للذاكرة.', advanced: 'البرمجة الشيئية المتقدمة OOP، إدارة الذاكرة اليدوية، والتعامل مع هياكل البيانات المعقدة الخوارزمية.' }
+            },
+            { id: 'php', cat: 'coding', title: 'تطوير الباك اند بلغة PHP', icon: 'fa-php', color: 'from-violet-600 to-purple-500', desc: 'بناء خلفية المواقع الديناميكية، قواعد البيانات، والربط البرمجي الأمن.', isCoding: true,
+              levels: { beginner: 'بنية الملفات، دمجها مع HTML، المتغيرات والمصفوفات والـ GET و POST.', intermediate: 'جلسات العمل (Sessions)، حماية النماذج، والاتصال بقواعد البيانات واستخراج الاستعلامات.', advanced: 'بناء لوحات تحكم ذكية، معمارية MVC، وتطوير برمجيات ومكونات RESTful APIs فائقة التأمين.' }
+            },
+            { id: 'sql', cat: 'coding', title: 'قواعد البيانات وإدارتها SQL', icon: 'fa-database', color: 'from-cyan-600 to-teal-500', desc: 'تنظيم، جلب، واستعلام البيانات الضخمة للمواقع بشكل فوري وسليم.', isCoding: true,
+              levels: { beginner: 'إنشاء الجداول، أنواع البيانات، الاستعلامات البسيطة بـ SELECT والمحددات.', intermediate: 'الربط بين الجداول بـ JOINs، الدوال الإحصائية، والمفاتيح الخارجية والأساسية الفعالة.', advanced: 'تحسين الاستعلامات والـ Indexing، العمليات التلقائية Triggers، وتأمين وحفظ البيانات الدورية والتراكمية.' }
+            },
+            // Languages Section
+            { id: 'en', cat: 'languages', title: 'اللغة الإنجليزية الاحترافية', icon: 'fa-language', color: 'from-emerald-600 to-teal-500', desc: 'تمكين كامل لمهارات التحدث والكتابة المطلوبة دولياً بسلاسة.', isLanguage: true, langKey: 'en' },
+            { id: 'it', cat: 'languages', title: 'اللغة الإيطالية الجميلة', icon: 'fa-music', color: 'from-green-600 to-emerald-500', desc: 'تحدث الإيطالية بطلاقة من الصفر عبر محادثات وقواعد حية.', isLanguage: true, langKey: 'it' },
+            { id: 'fr', cat: 'languages', title: 'اللغة الفرنسية الراقية', icon: 'fa-feather', color: 'from-blue-700 to-blue-500', desc: 'إتقان النطق الفرنسي الصحيح وفهم المصطلحات العملية الحديثة.', isLanguage: true, langKey: 'fr' },
+            { id: 'de', cat: 'languages', title: 'اللغة الألمانية للأعمال', icon: 'fa-bolt', color: 'from-yellow-600 to-amber-600', desc: 'بناء أساس قوي جداً في القواعد والمصطلحات الألمانية للمهن.', isLanguage: true, langKey: 'de' },
+            { id: 'es', cat: 'languages', title: 'اللغة الإسبانية السريعة', icon: 'fa-fire', color: 'from-orange-500 to-rose-500', desc: 'تحدث وافهم الثقافة الإسبانية عبر أقوى نظام محادثات ذكي.', isLanguage: true, langKey: 'es' },
+            // Platforms Section
+            { id: 'udemy', cat: 'platforms', isPlatform: true, title: 'منصة Udemy العالمية', icon: 'fa-play-circle', color: 'from-purple-700 to-purple-500', logo: 'U', desc: 'أكبر سوق متاح للكورسات عبر الإنترنت بملايين المواد التعليمية والمدرسين.', url: 'https://www.udemy.com' },
+            { id: 'coursera', cat: 'platforms', isPlatform: true, title: 'منصة Coursera الأكاديمية', icon: 'fa-university', color: 'from-blue-700 to-sky-600', logo: 'C', desc: 'كورسات وشهادات معتمدة مقدمة من أفضل جامعات وشركات العالم التقنية.', url: 'https://www.coursera.org' },
+            { id: 'youtube', cat: 'platforms', isPlatform: true, title: 'منصة YouTube التعليمية', icon: 'fa-youtube', color: 'from-red-600 to-rose-500', logo: 'Y', desc: 'أكبر كنز للمحتوى التعليمي المجاني والدروس المرئية المستمرة بدون حواجز.', url: 'https://www.youtube.com' }
+        ];
+
+        // Specific Detailed Content for Languages Modules
+        const languageLessons = {
+            en: { grammar: 'زمن المضارع البسيط Present Simple وكيفية استخدامه في الحياة اليومية والمهنية للإشارة إلى الحقائق والعادات.', vocab: 'أهم 50 كلمة مستخدمة في بيئات العمل التقنية والشركات الناشئة لعام 2026.', conversation: 'كيفية التحدث في مقابلة عمل دولية والتعريف بنفسك بطلاقة وثقة ممتدة.' },
+            it: { grammar: 'التعرف على أدوات التعريف والتنكير وصياغة الجمل البسيطة بالحاضر المستمر.', vocab: 'الكلمات الأساسية في السفر، المطاعم، والترحيب الرسمي والودي.', conversation: 'إجراء محادثة أولية مع شخص إيطالي في المطار أو الفندق للتعارف الشامل.' },
+            fr: { grammar: 'تصريف أفعال المجموعة الأولى وقواعد النطق الصامت لبعض الأحرف الأخيرة.', vocab: 'الأرقام والأيام والأشهر والمصطلحات الدبلوماسية والأكاديمية الدارجة.', conversation: 'طلب التوجيهات والمساعدة في شوارع باريس وتدبير المعيشة اليومية.' },
+            de: { grammar: 'التعرف على الحالات الإعرابية الأربعة Nominativ, Akkusativ وبناء الجملة الفعلي.', vocab: 'مصطلحات التوظيف والتعاملات الرسمية والمفردات الصناعية والهندسية.', conversation: 'الحديث مع مديرك الألماني حول سير العمل والخطط الزمنية للمشاريع.' },
+            es: { grammar: 'استخدام أفعال الكينونة Ser و Estar والفروقات الجوهرية بينهما في الصياغة.', vocab: 'أفراد العائلة، الطقس، الألوان، والتعبيرات الحماسية الشهيرة.', conversation: 'تبادل أطراف الحديث في المقهى حول الهوايات والاهتمامات اليومية بطلاقة عفوية.' }
+        };
+
+        // Static Language Quiz Database
+        const languageQuizzes = {
+            en: [
+                { type: 'mcq', q: 'اختر الإجابة الصحيحة: She ____ code every single day.', options: ['write', 'writes', 'writing'], answer: 'writes' },
+                { type: 'tf', q: 'صح أم خطأ: كلمة "Software" تعتبر اسم معدود (Countable).', answer: 'false' },
+                { type: 'drag', q: 'اسحب الكلمة لمكانها الصحيح: "The system is ____"', target: 'online', options: ['online', 'under'] }
+            ],
+            it: [
+                { type: 'mcq', q: 'كيف نقول "شكراً جزيلاً" بالإيطالية؟', options: ['Grazie mille', 'Prego', 'Ciao'], answer: 'Grazie mille' },
+                { type: 'tf', q: 'صح أم خطأ: الفعل "Essere" يعني "يمتلك" في الإيطالية.', answer: 'false' },
+                { type: 'drag', q: 'أكمل التحية: "____ giorno"', target: 'Buon', options: ['Buon', 'Bella'] }
+            ],
+            fr: [
+                { type: 'mcq', q: 'ما هو معنى كلمة "Merci"؟', options: ['أهلاً', 'شكراً', 'وداعاً'], answer: 'شكراً' },
+                { type: 'tf', q: 'صح أم خطأ: "Le" هي أداة تعريف للمذكر الساكن.', answer: 'true' },
+                { type: 'drag', q: 'أكمل الجملة: "Je ____ un étudiant"', target: 'suis', options: ['suis', 'ai'] }
+            ],
+            de: [
+                { type: 'mcq', q: 'ما هي أداة التعريف لكلمة "Mädchen" (فتاة)؟', options: ['der', 'die', 'das'], answer: 'das' },
+                { type: 'tf', q: 'صح أم خطأ: "Guten Tag" تعني صباح الخير.', answer: 'false' },
+                { type: 'drag', q: 'أكمل: "Ich ____ Developer"', target: 'bin', options: ['bin', 'habe'] }
+            ],
+            es: [
+                { type: 'mcq', q: 'كيف تقول "مرحباً" باللغة الإسبانية؟', options: ['Hola', 'Adiós', 'Gracias'], answer: 'Hola' },
+                { type: 'tf', q: 'صح أم خطأ: حرف "H" لا ينطق أبداً في الإسبانية.', answer: 'true' },
+                { type: 'drag', q: 'أكمل: "Yo ____ de Egipto"', target: 'soy', options: ['soy', 'estoy'] }
+            ]
+        };
+
+        // Global State variables
+        let favorites = JSON.parse(localStorage.getItem('academy_favs')) || [];
+        let progress = JSON.parse(localStorage.getItem('academy_progress')) || {};
+        let currentCategory = 'all';
+
+        // --- 2. THEME & INITIALIZATION CONTROLS ---
+        function initApp() {
+            // Apply theme on load
+            if (localStorage.getItem('theme') === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').className = 'fas fa-sun text-lg';
+            } else {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = 'fas fa-moon text-lg';
+            }
+            updateFavBadge();
+            renderCards();
+            runLiveCode();
+            attachRippleEffects();
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-icon').className = 'fas fa-sun text-lg';
+                showToast('تم التبديل للوضع المضيء ☀️');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-icon').className = 'fas fa-moon text-lg';
+                showToast('تم التبديل للوضع المظلم 🌙');
+            }
+        }
+
+        // --- 3. TOAST NOTIFICATIONS FUNCTION ---
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = "bg-slate-900/90 text-white dark:bg-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto text-xs font-semibold border border-slate-700/50 dark:border-slate-200";
+            toast.innerHTML = `<i class="fas fa-info-circle text-brand-middle"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 50);
+
+            // Hide & Remove
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // --- 4. RIPPLE CLICK EFFECT ANIMATION ---
+        function attachRippleEffects() {
+            document.querySelectorAll('.btn-ripple').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    let x = e.clientX - e.target.getBoundingClientRect().left;
+                    let y = e.clientY - e.target.getBoundingClientRect().top;
+                    let ripples = document.createElement('span');
+                    ripples.className = 'ripple';
+                    ripples.style.left = x + 'px';
+                    ripples.style.top = y + 'px';
+                    this.appendChild(ripples);
+                    setTimeout(() => { ripples.remove() }, 600);
+                });
+            });
+        }
+
+        // --- 5. RENDER CARDS LOGIC ---
+        function renderCards() {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+
+            const filteredData = academyData.filter(item => {
+                if (currentCategory !== 'all' && item.cat !== currentCategory) return false;
+                return true;
+            });
+
+            if (filteredData.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400"><i class="fas fa-folder-open text-4xl mb-3"></i><p>لا توجد نتائج مطابقة لخيارات الفرز الحالية.</p></div>`;
+                return;
+            }
+
+            filteredData.forEach(item => {
+                const isFav = favorites.includes(item.id);
+                const progValue = progress[item.id] || 0;
+
+                let cardHTML = '';
+
+                if (item.isPlatform) {
+                    // Partner Platform Card
+                    cardHTML = `
+                        <div class="card-item group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between" data-title="${item.title}" data-desc="${item.desc}">
+                            <div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${item.color} text-white flex items-center justify-center text-xl font-black shadow-md">${item.logo}</div>
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400">منصة خارجية</span>
+                                </div>
+                                <h3 class="text-lg font-bold group-hover:text-brand-middle transition-colors">${item.title}</h3>
+                                <p class="text-slate-500 dark:text-slate-400 text-xs mt-2 line-clamp-3 leading-relaxed">${item.desc}</p>
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                                <a href="${item.url}" target="_blank" class="w-full inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 py-2.5 rounded-xl text-xs font-bold transition-all"><i class="fas fa-external-link-alt ml-2"></i>اذهب للمنصة</a>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Interactive Course Card (Design / Coding / Languages)
+                    cardHTML = `
+                        <div class="card-item group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between" data-title="${item.title}" data-desc="${item.desc}">
+                            <div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="p-3 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg shadow-purple-500/10"><i class="fas ${item.icon} text-lg"></i></div>
+                                    <button onclick="toggleFav('${item.id}')" class="text-lg p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-500 transition-colors">
+                                        <i class="${isFav ? 'fas fa-heart text-rose-500' : 'far fa-heart'}"></i>
+                                    </button>
+                                </div>
+                                <h3 class="text-lg font-bold group-hover:text-brand-middle transition-colors">${item.title}</h3>
+                                <p class="text-slate-500 dark:text-slate-400 text-xs mt-2 line-clamp-2 leading-relaxed">${item.desc}</p>
+                                
+                                <div class="mt-4 space-y-1.5">
+                                    <div class="flex items-center justify-between text-xs text-slate-400">
+                                        <span>معدل الإنجاز</span>
+                                        <span class="font-bold text-brand-middle">${progValue}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                                        <div class="bg-gradient-to-r from-brand-start to-brand-middle h-full rounded-full transition-all duration-500" style="width: ${progValue}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex gap-2">
+                                <button onclick="openCourseModal('${item.id}')" class="flex-grow bg-gradient-to-r from-brand-start to-brand-middle text-white py-2.5 rounded-xl text-xs font-bold hover:opacity-90 transition-all shadow-md shadow-blue-500/10 btn-ripple"><i class="fas fa-graduation-cap ml-2"></i>ابدأ الدراسة</button>
+                                <button onclick="downloadFiles('${item.title}')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="تحميل ملفات الكورس ومصادر الدعم"><i class="fas fa-download text-xs"></i></button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.insertAdjacentHTML('beforeend', cardHTML);
+            });
+            attachRippleEffects();
+        }
+
+        // --- 6. LIVE CODE RUNNER FUNCTION ---
+        function runLiveCode() {
+            const codeInput = document.getElementById('code-input').value;
+            const outputFrame = document.getElementById('code-output').contentWindow.document;
+            outputFrame.open();
+            outputFrame.write(codeInput);
+            outputFrame.close();
+        }
+
+        // --- 7. FILTERING & SEARCH CONTROLS ---
+        function filterCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-gradient-to-r', 'from-brand-start', 'to-brand-middle', 'text-white');
+                btn.classList.add('bg-slate-800/80', 'text-slate-300');
+            });
+            
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.remove('bg-slate-800/80', 'text-slate-300');
+            activeBtn.classList.add('active', 'bg-gradient-to-r', 'from-brand-start', 'to-brand-middle', 'text-white');
+            
+            renderCards();
+            showToast(`تم فرز العناصر المعروضة بنجاح.`);
+        }
+
+        function filterCards() {
+            const query = document.getElementById('global-search').value.toLowerCase();
+            document.querySelectorAll('.card-item').forEach(card => {
+                const title = card.getAttribute('data-title').toLowerCase();
+                const desc = card.getAttribute('data-desc').toLowerCase();
+                if (title.includes(query) || desc.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function filterByFav() {
+            if(favorites.length === 0) {
+                showToast("قائمة المفضلة لديك فارغة حالياً 💔");
+                return;
+            }
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            
+            const favItems = academyData.filter(i => favorites.includes(i.id));
+            currentCategory = 'all'; // resetting active button visually
+            
+            favItems.forEach(item => {
+                // simple render copy for simplicity
+                const progValue = progress[item.id] || 0;
+                let cardHTML = `
+                    <div class="card-item group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md relative flex flex-col justify-between" data-title="${item.title}" data-desc="${item.desc}">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 rounded-2xl bg-gradient-to-br ${item.color} text-white"><i class="fas ${item.icon}"></i></div>
+                                <button onclick="toggleFav('${item.id}')" class="text-lg text-rose-500"><i class="fas fa-heart"></i></button>
+                            </div>
+                            <h3 class="text-lg font-bold">${item.title}</h3>
+                            <p class="text-slate-500 text-xs mt-2">${item.desc}</p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t flex gap-2">
+                            <button onclick="openCourseModal('${item.id}')" class="flex-grow bg-gradient-to-r from-brand-start to-brand-middle text-white py-2 rounded-xl text-xs font-bold">تكملة الدراسة</button>
+                        </div>
+                    </div>`;
+                container.insertAdjacentHTML('beforeend', cardHTML);
+            });
+            showToast("تم عرض عناصر المفضلة فقط ❤️");
+        }
+
+        // --- 8. FAVORITES & PROGRESS MANAGEMENT ---
+        function toggleFav(id) {
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(item => item !== id);
+                showToast('تمت إزالة الكورس من المفضلة.');
+            } else {
+                favorites.push(id);
+                showToast('❤️ تم إضافة الكورس إلى قائمتك المفضلة.');
+            }
+            localStorage.setItem('academy_favs', JSON.stringify(favorites));
+            updateFavBadge();
+            renderCards();
+        }
+
+        function updateFavBadge() {
+            document.getElementById('fav-count').innerText = favorites.length;
+        }
+
+        function downloadFiles(title) {
+            showToast(`🚀 بدأ تحميل ملفات دعم ومصادر: ${title}`);
+        }
+
+        function updateProgress(id, amount) {
+            let current = progress[id] || 0;
+            current = Math.min(current + amount, 100);
+            progress[id] = current;
+            localStorage.setItem('academy_progress', JSON.stringify(progress));
+            renderCards();
+        }
+
+        // --- 9. DYNAMIC MODAL WORKFLOW ---
+        function openCourseModal(id) {
+            const item = academyData.find(i => i.id === id);
+            const modal = document.getElementById('course-modal');
+            
+            document.getElementById('modal-title').innerText = item.title;
+            const iconBox = document.getElementById('modal-icon-container');
+            iconBox.className = `p-2.5 rounded-xl bg-gradient-to-br ${item.color} text-white`;
+            iconBox.innerHTML = `<i class="fas ${item.icon} text-lg"></i>`;
+
+            const contentArea = document.getElementById('modal-content');
+            contentArea.innerHTML = '';
+
+            if (item.isLanguage) {
+                // Languages Layout: Tabbed structure for grammar, vocabulary, conversation, and interactive quiz
+                const dataLang = languageLessons[item.langKey];
+                contentArea.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-100 dark:bg-slate-800/50 rounded-2xl">
+                            <h4 class="font-bold text-brand-start mb-1"><i class="fas fa-book ml-2"></i>1. دروس القواعد الأساسية (Grammar)</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">${dataLang.grammar}</p>
+                            <button onclick="updateProgress('${item.id}', 20); showToast('تم تسجيل قراءة القواعد!');" class="mt-2 text-xs text-brand-middle font-bold">تحديد كمكتمل (+20% تقدم)</button>
+                        </div>
+                        <div class="p-4 bg-slate-100 dark:bg-slate-800/50 rounded-2xl">
+                            <h4 class="font-bold text-purple-500 mb-1"><i class="fas fa-spell-check ml-2"></i>2. بنك الكلمات والمفردات المفتاحية (Vocabulary)</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">${dataLang.vocab}</p>
+                            <button onclick="updateProgress('${item.id}', 20); showToast('تم حفظ الكلمات بنجاح!');" class="mt-2 text-xs text-purple-500 font-bold">تحديد كمكتمل (+20% تقدم)</button>
+                        </div>
+                        <div class="p-4 bg-slate-100 dark:bg-slate-800/50 rounded-2xl">
+                            <h4 class="font-bold text-pink-500 mb-1"><i class="fas fa-comments ml-2"></i>3. جلسة المحادثة التفاعلية (Conversation)</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">${dataLang.conversation}</p>
+                            <button onclick="updateProgress('${item.id}', 20); showToast('تم الانتهاء من التدريب الصوتي!');" class="mt-2 text-xs text-pink-500 font-bold">تحديد كمكتمل (+20% تقدم)</button>
+                        </div>
+                        
+                        <div class="p-6 bg-gradient-to-br from-slate-900 to-purple-950 text-white rounded-2xl space-y-4 shadow-inner">
+                            <h4 class="font-bold text-amber-400 text-base"><i class="fas fa-star ml-2"></i>الكويز التقييمي الشامل الفوري</h4>
+                            <div id="quiz-box-${item.id}" class="space-y-6">
+                                </div>
+                            <button onclick="evaluateLangQuiz('${item.id}')" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-lg">إرسال وتصحيح الكويز فوراً</button>
+                        </div>
+                    </div>
+                `;
+                // Inject the complex components of the quiz
+                loadLanguageQuizDOM(item.id);
+            } else {
+                // Graphic Design & Coding Standard 3 Levels Layout
+                contentArea.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-start transition-all">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-blue-500/10 text-blue-500">المستوى الأول: مبتدئ</span>
+                                <button onclick="updateProgress('${item.id}', 30); showToast('أحسنت! أنهيت المستوى المبتدئ.');" class="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg hover:bg-brand-start hover:text-white transition-all">اكتمل 🌟</button>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${item.levels.beginner}</p>
+                        </div>
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-middle transition-all">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-purple-500/10 text-purple-500">المستوى الثاني: متوسط</span>
+                                <button onclick="updateProgress('${item.id}', 35); showToast('رائع! تقدمك ملحوظ في المستوى المتوسط.');" class="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg hover:bg-brand-middle hover:text-white transition-all">اكتمل 🌟</button>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${item.levels.intermediate}</p>
+                        </div>
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-end transition-all">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-pink-500/10 text-pink-500">المستوى الثالث: متقدم</span>
+                                <button onclick="updateProgress('${item.id}', 35); showToast('مذهل! لقد وصلت للاحتراف الكامل وتوجت بالنجوم!');" class="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg hover:bg-brand-end hover:text-white transition-all">اكتمل 🌟</button>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${item.levels.advanced}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Open Animations
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+            }, 50);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('course-modal');
+            modal.classList.add('opacity-0');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // --- 10. INTERACTIVE QUIZ ENGINE ---
+        function loadLanguageQuizDOM(id) {
+            const quizContainer = document.getElementById(`quiz-box-${id}`);
+            const questions = languageQuizzes[academyData.find(i => i.id === id).langKey];
+            quizContainer.innerHTML = '';
+
+            questions.forEach((q, idx) => {
+                let qHTML = '';
+                if(q.type === 'mcq') {
+                    qHTML = `
+                        <div class="space-y-2">
+                            <p class="text-xs font-medium text-slate-300">${idx+1}. ${q.q}</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-900">
+                                ${q.options.map(opt => `<label class="bg-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="radio" name="q-ans-${idx}" value="${opt}"> ${opt}</label>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else if(q.type === 'tf') {
+                    qHTML = `
+                        <div class="space-y-2">
+                            <p class="text-xs font-medium text-slate-300">${idx+1}. ${q.q}</p>
+                            <div class="flex gap-4 text-slate-900">
+                                <label class="bg-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="radio" name="q-ans-${idx}" value="true"> صح ✅</label>
+                                <label class="bg-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="radio" name="q-ans-${idx}" value="false"> خطأ ❌</label>
+                            </div>
+                        </div>
+                    `;
+                } else if(q.type === 'drag') {
+                    qHTML = `
+                        <div class="space-y-2">
+                            <p class="text-xs font-medium text-slate-300">${idx+1}. ${q.q}</p>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div id="drop-zone-${idx}" class="w-32 h-8 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center text-xs text-amber-400 font-bold" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="dropElement(event, ${idx})">اسحب الكلمة هنا</div>
+                                <div class="flex gap-2">
+                                    ${q.options.map((opt, oIdx) => `<span id="drag-opt-${idx}-${oIdx}" class="bg-slate-200 text-slate-900 px-3 py-1 rounded-lg text-xs font-bold cursor-grab active:cursor-grabbing" draggable="true" ondragstart="dragElement(event, '${opt}')">${opt}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                quizContainer.insertAdjacentHTML('beforeend', qHTML);
+            });
+        }
+
+        // Drag and Drop Core Utilities
+        let draggedText = '';
+        function dragElement(ev, text) { draggedText = text; }
+        function allowDrop(ev) { ev.preventDefault(); ev.target.classList.add('drag-over'); }
+        function leaveDrop(ev) { ev.target.classList.remove('drag-over'); }
+        function dropElement(ev, idx) {
+            ev.preventDefault();
+            ev.target.classList.remove('drag-over');
+            ev.target.innerText = draggedText;
+            ev.target.setAttribute('data-user-select', draggedText);
+        }
+
+        function evaluateLangQuiz(id) {
+            const course = academyData.find(i => i.id === id);
+            const questions = languageQuizzes[course.langKey];
+            let score = 0;
+
+            questions.forEach((q, idx) => {
+                if(q.type === 'mcq' || q.type === 'tf') {
+                    const selected = document.querySelector(`input[name="q-ans-${idx}"]:checked`);
+                    if(selected && selected.value === q.answer) score++;
+                } else if(q.type === 'drag') {
+                    const dropped = document.getElementById(`drop-zone-${idx}`).getAttribute('data-user-select');
+                    if(dropped && dropped === q.target) score++;
+                }
+            });
+
+            // Calculate stars awarded
+            let stars = score === 3 ? '⭐⭐⭐' : score === 2 ? '⭐⭐' : score === 1 ? '⭐' : '❌ أعد المحاولة';
+            
+            // Show result alerts
+            alert(`نتيجة كويز ${course.title}:\nالدرجة المستحقة: ${score} من 3\nالتقييم بالنجوم: ${stars}`);
+            
+            if (score >= 2) {
+                updateProgress(id, 40); 
+                showToast(`🎉 مبروك نجاحك في الكويز وحصولك على ${stars}!`);
+            } else {
+                showToast(`⚠️ لم تجتز الكويز، يمكنك مراجعة الكلمات والدروس والمحاولة مجدداً.`);
+            }
+        }
+
+        // Bootstrapping life-cycle
+        window.onload = initApp;
+    </script>
+</body>
+</html>
